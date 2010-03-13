@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="app_name">anEggs XL</string>
+	<string name="about">About</string>
+	<string name="OK">OK</string>
+
+	<string name="game_I">Game I</string>
+	<string name="game_II">Game II</string>
+	<string name="high_score">High Score</string>
+	<string name="by">by</string>
+	<string name="i4napps">i4nApps</string>
+</resources>
