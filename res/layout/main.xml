@@ -298,7 +298,9 @@
 			qwad:siteId="anEggs-g6jdmcgw"
 			qwad:publisherId="fb936e4c62ed40fd8514f9737fa5a980"
 			qwad:mediaType="banner" qwad:placement="top" qwad:adInterval="30"
-			qwad:animation="slide" />
+			qwad:animation="slide"
+			qwad:adEventListenerClass="com.i4napps.aneggsxl.XLActivity" 
+			/>
 
 		<!-- qwad:testMode="true"  -->
 		<!--           qwad:displayMode="autoRotate" -->

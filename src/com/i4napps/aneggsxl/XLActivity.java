@@ -4,6 +4,11 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import com.qwapi.adclient.android.data.Ad;
+import com.qwapi.adclient.android.data.Status;
+import com.qwapi.adclient.android.requestparams.AdRequestParams;
+import com.qwapi.adclient.android.view.AdEventsListener;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -17,13 +22,15 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
 
-public class XLActivity extends Activity {
+public class XLActivity extends Activity implements AdEventsListener {
 
 	static final int DIALOG_INFO_ID = 0;
 	static final int DIALOG_STATS_ID = 1;
+	static final int DIALOG_UNLOCK_ID = 2;
 	static final int CATCHER_LBOTTOM = 0;
 	static final int CATCHER_LTOP = 1;	
 	static final int CATCHER_RTOP = 2;
@@ -36,6 +43,7 @@ public class XLActivity extends Activity {
 
 	private Random mRandom = new Random(System.currentTimeMillis());
 
+	private boolean mUnlocked = false;
 	private int mScoreGameI = 0;
 	private int mScoreGameII = 0;
 	private int mCatcherPosition = CATCHER_LTOP;
@@ -674,22 +682,9 @@ public class XLActivity extends Activity {
 			return false;
 		}
 
-//		public synchronized boolean hasProjectiles(int trajId) {
-//			return (trajectories[trajId] != 0);
-//		}
-
 		public synchronized boolean projectileFell(int trajId) {
 			return hasProjectileOn(trajId, trajectoryLength - 1);
 		}
-
-//		public synchronized int queuedTrajectory(int queueIdx) {
-//			if (queueIdx >= trajectoryQueueCnt) return -1;
-//			int orderIdx = (trajectoryQueueIdx + queueIdx) % trajectoryQueueCnt;;
-//			do {
-//				orderIdx = (orderIdx + 1) % trajectoryQueueCnt;	
-//			} while (trajectoriesQueue[orderIdx] < 0);
-//			return trajectoriesQueue[orderIdx];
-//		}
 		
 		public synchronized int getFellDownId() {
 			for (int i = 0; i < trajectoriesNumber; i++) {
@@ -743,10 +738,6 @@ public class XLActivity extends Activity {
 	}
 	
 	
-	
-
-
-
 	private OnClickListener mInfoListener = new OnClickListener() {
 		public void onClick(View v) {
 			showDialog(DIALOG_INFO_ID);
@@ -795,6 +786,13 @@ public class XLActivity extends Activity {
 		public void onClick(View v) {
 			int mode = (v == findViewById(R.id.btnGameI) ? GAME_MODE_I : GAME_MODE_II);
 			if (mGameThread.state != STATE_READY) return;
+			
+			// check if game mode 2 is unlocked
+			if (mode == GAME_MODE_II && !mUnlocked) {
+				showDialog(DIALOG_UNLOCK_ID);
+				return;
+			}
+			
 			mGameThread.startGame(mode);
 			updatePoints();
 			updatePenalties();
@@ -822,6 +820,11 @@ public class XLActivity extends Activity {
 		public boolean onTouch(View v, MotionEvent event) {
 
 			if (event.getAction() == MotionEvent.ACTION_DOWN) {
+				if (!mUnlocked) {
+					showDialog(DIALOG_UNLOCK_ID);
+					return false;
+				}
+				
 				if (mGameThread.state == STATE_RUNNING) {
 					mGameThread.suspendGame();
 				} else if (mGameThread.state == STATE_PAUSED) {
@@ -887,6 +890,9 @@ public class XLActivity extends Activity {
 	    SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
 	    mScoreGameI = settings.getInt("scoreGameI", 0);
 	    mScoreGameII = settings.getInt("scoreGameII", 0);
+	    
+		// restore features unlocked status from preferences
+		mUnlocked = settings.getBoolean("featuresUnlocked", false);
 
 		initSounds();
 
@@ -922,6 +928,7 @@ public class XLActivity extends Activity {
 	       SharedPreferences.Editor editor = settings.edit();
 	       editor.putInt("scoreGameI", mScoreGameI);
 	       editor.putInt("scoreGameII", mScoreGameII);
+	       editor.putBoolean("featuresUnlocked", mUnlocked);
 
 	       // Don't forget to commit your edits!!!
 	       editor.commit();
@@ -969,6 +976,13 @@ public class XLActivity extends Activity {
 					.setCancelable(false)
 					.setPositiveButton(getString(R.string.OK), null);
 			break;
+		case DIALOG_UNLOCK_ID:
+			builder.setTitle(getString(R.string.unlock_title))
+			.setMessage(getString(R.string.unlock_msg))
+			.setCancelable(false)
+			.setPositiveButton(getString(R.string.OK), null);
+
+			break;
 
 		}
 		AlertDialog alert = builder.create();
@@ -983,4 +997,26 @@ public class XLActivity extends Activity {
 					+ "\n" + getString(R.string.game_II) + ":\t" + mScoreGameII);
 		}
 	}
+
+	@Override
+	public void onAdClick(Context arg0, Ad arg1) {
+		// ad click listener
+		//Log.d("ad", "Ad Click");
+		// luckily for us, Context is exactly the running activity
+		((XLActivity)arg0).mUnlocked = true;
+	}
+
+	@Override
+	public void onAdRequest(Context arg0, AdRequestParams arg1) {}
+
+	@Override
+	public void onAdRequestFailed(Context arg0, AdRequestParams arg1,
+			Status arg2) {}
+
+	@Override
+	public void onAdRequestSuccessful(Context arg0, AdRequestParams arg1,
+			Ad arg2) {}
+
+	@Override
+	public void onDisplayAd(Context arg0, Ad arg1) {}
 }
