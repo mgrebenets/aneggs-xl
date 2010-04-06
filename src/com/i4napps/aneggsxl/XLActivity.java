@@ -1,5 +1,6 @@
 package com.i4napps.aneggsxl;
 
+
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -788,7 +789,7 @@ public class XLActivity extends Activity implements AdEventsListener {
 			if (mGameThread.state != STATE_READY) return;
 			
 			// check if game mode 2 is unlocked
-			if (mode == GAME_MODE_II && !mUnlocked) {
+			if (mAddDisplayed && mode == GAME_MODE_II && !mUnlocked) {
 				showDialog(DIALOG_UNLOCK_ID);
 				return;
 			}
@@ -820,7 +821,7 @@ public class XLActivity extends Activity implements AdEventsListener {
 		public boolean onTouch(View v, MotionEvent event) {
 
 			if (event.getAction() == MotionEvent.ACTION_DOWN) {
-				if (!mUnlocked) {
+				if (mAddDisplayed && !mUnlocked) {
 					showDialog(DIALOG_UNLOCK_ID);
 					return false;
 				}
@@ -1017,6 +1018,10 @@ public class XLActivity extends Activity implements AdEventsListener {
 	public void onAdRequestSuccessful(Context arg0, AdRequestParams arg1,
 			Ad arg2) {}
 
+	private boolean mAddDisplayed = false;
 	@Override
-	public void onDisplayAd(Context arg0, Ad arg1) {}
+	public void onDisplayAd(Context arg0, Ad arg1) {
+		Log.d("ad", "Ad Displayed");
+		((XLActivity)arg0).mAddDisplayed = true;
+	}
 }
